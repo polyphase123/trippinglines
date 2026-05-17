@@ -1,0 +1,2411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Philippine Grid Crisis Simulator (May 2026 Incident)</title>
+    
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons for clean aesthetics -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Leaflet JS for professional geographic mapping -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <style>
+        :root {
+            /* Clean White Premium Design System Tokens */
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e1;
+            
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            
+            /* Status HSL tailored colors */
+            --color-normal: #10b981;       /* Emerald Green */
+            --color-normal-bg: #ecfdf5;
+            
+            --color-yellow: #f59e0b;       /* Amber Yellow */
+            --color-yellow-bg: #fffbeb;
+            
+            --color-red: #ef4444;          /* Crimson Red */
+            --color-red-bg: #fef2f2;
+            
+            --color-accent: #3b82f6;       /* Clean Blue */
+            --color-accent-bg: #eff6ff;
+            
+            --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.03), 0 1px 2px rgba(15, 23, 42, 0.02);
+            --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+            
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Base Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        /* Container Layout */
+        .app-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1.15fr 0.85fr;
+                padding: 32px;
+                height: 100vh;
+                overflow: hidden;
+                gap: 32px;
+            }
+            .left-column {
+                overflow-y: auto;
+                padding-right: 8px;
+                height: calc(100vh - 64px);
+            }
+            .right-column {
+                overflow-y: auto;
+                padding-right: 8px;
+                height: calc(100vh - 64px);
+            }
+        }
+
+        /* Common Premium Card Styling */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--border-hover);
+        }
+
+        /* App Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .live-tag {
+            background-color: var(--color-red-bg);
+            color: var(--color-red);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            animation: pulse-border 2s infinite;
+        }
+
+        /* Timeline Controller */
+        .timeline-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .timeline-slider-container {
+            margin: 20px 0 10px 0;
+            position: relative;
+        }
+
+        .custom-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--border-color);
+            outline: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            border: 4px solid var(--bg-card);
+            box-shadow: var(--shadow-sm), 0 0 0 3px rgba(59, 130, 246, 0.2);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .custom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #2563eb;
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        .timeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            width: 60px;
+            text-align: center;
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+
+        .timeline-step.active {
+            opacity: 1;
+        }
+
+        .timeline-step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            margin-bottom: 6px;
+            border: 2px solid var(--bg-card);
+            box-shadow: 0 0 0 2px var(--border-color);
+            transition: var(--transition);
+        }
+
+        .timeline-step.active .timeline-step-dot {
+            background: var(--color-accent);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            transform: scale(1.2);
+        }
+
+        .timeline-step-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+        }
+
+        .timeline-step.active .timeline-step-label {
+            color: var(--color-accent);
+            font-weight: 700;
+        }
+
+        .simulation-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .btn {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: var(--font-display);
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            font-size: 0.85rem;
+        }
+
+        .btn:hover {
+            border-color: var(--text-secondary);
+            background-color: var(--bg-main);
+        }
+
+        .btn-primary {
+            background-color: var(--color-accent);
+            border-color: var(--color-accent);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .simulation-date-banner {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .simulation-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Map Section Card Styling */
+        .map-card {
+            padding: 20px;
+        }
+
+        .map-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .map-legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-line {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* Leaflet Map Styling Override */
+        #map {
+            width: 100%;
+            height: 480px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background-color: #f8fafc;
+            z-index: 2;
+        }
+
+        /* Premium Minimalist Map Styling filter */
+        .leaflet-tile-container img {
+            filter: grayscale(0.3) contrast(1.05) brightness(0.98);
+        }
+
+        /* Custom borderless floating tooltip text style */
+        .map-tooltip {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: var(--text-primary) !important;
+            font-family: var(--font-display) !important;
+            font-size: 9px !important;
+            font-weight: 700 !important;
+            padding: 0 !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9), 
+                         0 -1px 2px rgba(255, 255, 255, 0.9), 
+                         1px 0 2px rgba(255, 255, 255, 0.9), 
+                         -1px 0 2px rgba(255, 255, 255, 0.9);
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* Custom Zoom Control Styling */
+        .leaflet-bar {
+            border: 1px solid var(--border-color) !important;
+            box-shadow: var(--shadow-sm) !important;
+            border-radius: var(--radius-sm) !important;
+            overflow: hidden;
+        }
+
+        .leaflet-bar a {
+            background-color: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            transition: var(--transition);
+        }
+
+        .leaflet-bar a:hover {
+            background-color: var(--bg-main) !important;
+            color: var(--color-accent) !important;
+        }
+
+        /* Dynamic SVG line paths drawn inside Leaflet map */
+        .transmission-line {
+            stroke-linecap: round;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .transmission-line.normal {
+            stroke: var(--color-normal) !important;
+            stroke-dasharray: none !important;
+        }
+
+        .transmission-line.tripped {
+            stroke: var(--color-red) !important;
+            stroke-dasharray: 6, 6 !important;
+            animation: dash 1s linear infinite !important;
+        }
+
+        .transmission-line.restored-offline {
+            stroke: var(--color-yellow) !important;
+            stroke-dasharray: 4, 4 !important;
+        }
+
+        .transmission-line.static-line {
+            stroke: #94a3b8 !important;
+            stroke-dasharray: none !important;
+        }
+
+        .transmission-line.hvdc-line {
+            stroke: #a855f7 !important;
+            stroke-dasharray: 4, 4 !important;
+            animation: dash 1.5s linear infinite !important;
+        }
+
+        /* SVG Node Marker Styling in Leaflet */
+        .leaflet-interactive.map-node {
+            stroke: #ffffff !important;
+            stroke-width: 2.5px !important;
+            fill-opacity: 1 !important;
+            stroke-opacity: 1 !important;
+            transition: var(--transition);
+        }
+
+        .leaflet-interactive.map-node.online {
+            fill: var(--color-normal) !important;
+            filter: drop-shadow(0 0 5px var(--color-normal));
+        }
+
+        .leaflet-interactive.map-node.tripped {
+            fill: var(--color-red) !important;
+            filter: drop-shadow(0 0 8px var(--color-red));
+            animation: pulse-glow 1.5s infinite;
+        }
+
+        .leaflet-interactive.map-node.derated {
+            fill: var(--color-yellow) !important;
+            filter: drop-shadow(0 0 5px var(--color-yellow));
+        }
+
+        .leaflet-interactive.map-node.load {
+            fill: #475569 !important;
+        }
+
+        .leaflet-interactive.map-node.hvdc {
+            fill: #a855f7 !important;
+        }
+
+        .leaflet-interactive.map-node.coop {
+            fill: #3b82f6 !important; /* Sapphire blue for load centers */
+            filter: drop-shadow(0 0 4px rgba(59,130,246,0.5));
+            transition: var(--transition);
+        }
+
+        .leaflet-interactive.map-node.coop.normal {
+            fill: #3b82f6 !important;
+            filter: drop-shadow(0 0 4px rgba(59,130,246,0.5));
+        }
+
+        .leaflet-interactive.map-node.coop.mld-active {
+            fill: var(--color-yellow) !important;
+            filter: drop-shadow(0 0 8px var(--color-yellow));
+            animation: pulse-mld 1.8s infinite !important;
+        }
+
+        @keyframes pulse-mld {
+            0% {
+                filter: drop-shadow(0 0 2px var(--color-yellow));
+            }
+            50% {
+                filter: drop-shadow(0 0 10px var(--color-yellow));
+                r: 6.5px;
+            }
+            100% {
+                filter: drop-shadow(0 0 2px var(--color-yellow));
+            }
+        }
+
+        /* Responsive Grid for Outages Card */
+        .grid-detail-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 12px;
+        }
+        @media (min-width: 640px) {
+            .grid-detail-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* SVG Map Animations */
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                filter: drop-shadow(0 0 2px var(--color-red));
+                opacity: 0.8;
+            }
+            50% {
+                filter: drop-shadow(0 0 10px var(--color-red));
+                opacity: 1;
+            }
+            100% {
+                filter: drop-shadow(0 0 2px var(--color-red));
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes pulse-border {
+            0% {
+                border-color: rgba(239, 68, 68, 0.2);
+            }
+            50% {
+                border-color: rgba(239, 68, 68, 0.6);
+            }
+            100% {
+                border-color: rgba(239, 68, 68, 0.2);
+            }
+        }
+
+        /* Grid Status & Dashboards */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            text-transform: uppercase;
+        }
+
+        .status-badge.normal {
+            background-color: var(--color-normal-bg);
+            color: var(--color-normal);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-badge.yellow {
+            background-color: var(--color-yellow-bg);
+            color: var(--color-yellow);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .status-badge.red {
+            background-color: var(--color-red-bg);
+            color: var(--color-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .dashboard-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        /* Energy Gauge */
+        .gauge-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .gauge-bar-outer {
+            width: 100%;
+            height: 12px;
+            background: var(--border-color);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .gauge-bar-inner {
+            height: 100%;
+            border-radius: 999px;
+            width: 0%;
+            transition: var(--transition);
+        }
+
+        .gauge-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Detail/Drawer Inspector Panel */
+        .inspector-panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-md);
+            display: none; /* Displayed when asset is clicked */
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .inspector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .inspector-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .inspector-body {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .inspector-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .inspector-stat {
+            background: #f8fafc;
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .inspector-stat-val {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .inspector-stat-lbl {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        /* Manual Load Dropping List */
+        .mld-container {
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            background: #f8fafc;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+
+        .mld-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .mld-item:last-child {
+            border-bottom: none;
+        }
+
+        .mld-area {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .mld-coop {
+            color: var(--color-red);
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+
+        /* Perspectives tab */
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        
+        .tabs-header::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--color-accent);
+            border-bottom-color: var(--color-accent);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .perspective-card {
+            background: #f8fafc;
+            border-left: 4px solid var(--color-accent);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 16px;
+            font-size: 0.85rem;
+        }
+
+        .perspective-avatar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .perspective-avatar img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e2e8f0;
+        }
+
+        .perspective-name {
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .perspective-role {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Reddit Netizen Corner Section */
+        .reddit-feed {
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+        }
+
+        .reddit-post {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            background: #ffffff;
+            transition: var(--transition);
+        }
+
+        .reddit-post:hover {
+            border-color: var(--border-hover);
+        }
+
+        .reddit-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .reddit-subreddit {
+            font-weight: 700;
+            color: #ff4500; /* Reddit orange */
+        }
+
+        .reddit-author {
+            color: var(--text-tertiary);
+        }
+
+        .reddit-body {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .reddit-footer {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            border-top: 1px solid #f1f5f9;
+            padding-top: 6px;
+        }
+
+        .reddit-votes {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+        }
+
+        .reddit-comment-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .reddit-input {
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .reddit-input:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Helper Classes */
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mt-4 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 8px; }
+        .text-xs { font-size: 0.75rem; }
+        .text-semibold { font-weight: 600; }
+        
+        .pulse-normal {
+            animation: pulse-normal 1.5s infinite;
+        }
+        @keyframes pulse-normal {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+        
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 99px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- LEFT COLUMN: Grid Map & Timeline Slider -->
+        <div class="left-column">
+            
+            <header>
+                <div class="header-title">
+                    <h1><i data-lucide="zap" style="color: var(--color-yellow)"></i> GRIDSTRIKE PH</h1>
+                    <p>May 2026 Grid Tripping & Outage Simulator</p>
+                    <p style="font-size: 0.85rem; color: var(--color-accent); font-weight: 700; margin-top: 4px; font-family: var(--font-display); display: flex; align-items: center; gap: 4px;">
+                        <i data-lucide="award" style="width: 14px; height: 14px;"></i> Developed by Engr. Franz Xyrlo Tobias, PEE
+                    </p>
+                </div>
+                <div class="live-tag">
+                    <span class="legend-dot" style="background: var(--color-red)"></span> 2026 Grid Event
+                </div>
+            </header>
+
+            <!-- 1. Timeline Control Card -->
+            <div class="card timeline-section">
+                <div class="simulation-date-banner">
+                    <i data-lucide="calendar"></i> <span id="current-sim-time">May 13, 2026 - 6:00 AM</span>
+                </div>
+                <div class="simulation-desc" id="current-sim-desc">
+                    Initial Trigger: Widespread grid fault causing key Batangas 500kV corridors to trip, isolating major gas plants.
+                </div>
+                
+                <div class="timeline-slider-container">
+                    <input type="range" min="0" max="4" value="0" class="custom-slider" id="sim-slider">
+                    
+                    <div class="timeline-steps">
+                        <div class="timeline-step active" onclick="setSimStep(0)">
+                            <div class="timeline-step-dot"></div>
+                            <div class="timeline-step-label">May 13<br>6:00 AM</div>
+                        </div>
+                        <div class="timeline-step" onclick="setSimStep(1)">
+                            <div class="timeline-step-dot"></div>
+                            <div class="timeline-step-label">May 13<br>4:52 PM</div>
+                        </div>
+                        <div class="timeline-step" onclick="setSimStep(2)">
+                            <div class="timeline-step-dot"></div>
+                            <div class="timeline-step-label">May 14<br>3:00 PM</div>
+                        </div>
+                        <div class="timeline-step" onclick="setSimStep(3)">
+                            <div class="timeline-step-dot"></div>
+                            <div class="timeline-step-label">May 15<br>2:30 PM</div>
+                        </div>
+                        <div class="timeline-step" onclick="setSimStep(4)">
+                            <div class="timeline-step-dot"></div>
+                            <div class="timeline-step-label">May 16<br>10:30 AM</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="simulation-controls">
+                    <button class="btn btn-primary" id="play-btn" onclick="togglePlay()"><i data-lucide="play"></i> Play Simulation</button>
+                    <button class="btn" onclick="resetSim()"><i data-lucide="rotate-ccw"></i> Reset</button>
+                    <span class="text-xs text-secondary" style="margin-left: auto;" id="sim-status-indicator">Paused</span>
+                </div>
+            </div>
+
+            <!-- 2. Interactive Leaflet Map Card -->
+            <div class="card map-card">
+                <div class="map-header">
+                    <h3 class="flex-between" style="width: 100%; font-size: 1rem;">
+                        <span><i data-lucide="map" style="vertical-align: middle; margin-right: 4px;"></i> Interactive Grid Map</span>
+                        <span class="text-xs text-secondary" style="font-weight: normal;">Click nodes/lines for details</span>
+                    </h3>
+                </div>
+                
+                <div class="map-legend">
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--color-normal)"></span> Plant Online</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--color-red)"></span> Plant Tripped</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--color-yellow)"></span> Plant Derated</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #3b82f6;"></span> DU (Normal)</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--color-yellow); outline: 1px solid var(--color-yellow);"></span> DU (MLD Active)</div>
+                    <div class="legend-item"><span class="legend-line" style="background: var(--color-normal)"></span> 500kV Corridor</div>
+                    <div class="legend-item"><span class="legend-line" style="background: var(--color-red); border: 1px dashed white;"></span> Tripped Line</div>
+                    <div class="legend-item"><span class="legend-line" style="background: #a855f7;"></span> HVDC Link</div>
+                </div>
+
+                <!-- Leaflet geographic container -->
+                <div id="map"></div>
+            </div>
+            
+        </div>
+
+        <!-- RIGHT COLUMN: Control panel, dashboards, perspectives & Reddit feed -->
+        <div class="right-column">
+            
+            <!-- ⚡ GRID PHYSICS & RELIABILITY EXPLAINER -->
+            <div class="card" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); border-left: 5px solid var(--color-accent); padding: 20px;">
+                <h3 style="color: var(--text-primary); font-size: 1.05rem; display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+                    <i data-lucide="shield-alert" style="color: var(--color-accent)"></i> Grid Physics & Reliability Explainer
+                </h3>
+                <div style="font-size: 0.8rem; line-height: 1.45; color: var(--text-secondary); display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <strong style="color: var(--text-primary);"><i data-lucide="git-pull-request" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 2px;"></i> 1. Why High-Voltage Lines Trip (El Niño Sag & Flashover):</strong>
+                        Under severe El Niño summer heat (44°C+), air conditioning loads spike to record peaks. The high current flow heats up transmission lines, causing them to physically expand and sag. Batangas corridor lines sagged within close proximity of tall vegetation. This initiated a phase-to-ground flashover (air ionization). Zone 1 distance relays automatically tripped circuit breakers in milliseconds to prevent bulk grid collapse.
+                    </div>
+                    <div>
+                        <strong style="color: var(--text-primary);"><i data-lucide="timer" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 2px;"></i> 2. Why Power Plants Need Time to Recover (Turbine Thermal Stress):</strong>
+                        Supercritical units (like GNPD's 668MW) spin at 3,600 RPM to maintain 60Hz. A sudden trip causes massive "load rejection" (instant drop in electricity demand), causing high centrifugal and thermodynamic shocks. Automatic governor safety valves shut steam off in milliseconds to prevent turbine blade disintegration. Resynchronization requires slow, gradual pre-heating (restricted to ~2°C/minute) to prevent rotor shaft bending under centrifugal forces.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Asset Inspector Drawer (Dynamic) -->
+            <div class="inspector-panel" id="inspector">
+                <div class="inspector-header">
+                    <span class="inspector-title" id="insp-title"><i data-lucide="activity"></i> Asset Inspector</span>
+                    <button class="btn" style="padding: 2px 8px; font-size: 0.75rem;" onclick="closeInspector()"><i data-lucide="x"></i> Close</button>
+                </div>
+                <div class="inspector-body">
+                    <p id="insp-desc">Click on any power plant or transmission line on the map to run deep engineering diagnostics and analyze its tripping profile.</p>
+                    
+                    <div class="inspector-stat-grid" id="insp-stats" style="display: none;">
+                        <div class="inspector-stat">
+                            <div class="inspector-stat-val" id="insp-stat-capacity">--</div>
+                            <div class="inspector-stat-lbl">Capacity</div>
+                        </div>
+                        <div class="inspector-stat">
+                            <div class="inspector-stat-val" id="insp-stat-status">--</div>
+                            <div class="inspector-stat-lbl">Status</div>
+                        </div>
+                        <div class="inspector-stat">
+                            <div class="inspector-stat-val" id="insp-stat-reason">--</div>
+                            <div class="inspector-stat-lbl">Primary Issue</div>
+                        </div>
+                    </div>
+
+                    <div id="insp-tech-logs" style="background: #f1f5f9; padding: 10px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.75rem; border: 1px solid var(--border-color); display: none;">
+                        <strong>[SYSTEM LOG]</strong> Select an asset.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Grid Live Status Dashboard -->
+            <div class="card">
+                <div class="flex-between">
+                    <h3><i data-lucide="bar-chart-3" style="vertical-align: middle;"></i> Grid Telemetry</h3>
+                    <div class="status-badge normal" id="overall-status-badge">Normal</div>
+                </div>
+
+                <div class="dashboard-row">
+                    <div class="stat-card">
+                        <div class="stat-value" id="val-luzon-capacity">15,799 MW</div>
+                        <div class="stat-label">Luzon Cap.</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="val-luzon-demand">12,107 MW</div>
+                        <div class="stat-label">Luzon Peak Demand</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-row" style="margin-top: 10px;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="val-visayas-capacity">2,768 MW</div>
+                        <div class="stat-label">Visayas Cap.</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="val-visayas-demand">2,339 MW</div>
+                        <div class="stat-label">Visayas Peak Demand</div>
+                    </div>
+                </div>
+
+                <!-- Economic Losses Widget -->
+                <div class="dashboard-row" style="margin-top: 10px;">
+                    <div class="stat-card" style="border: 1px solid rgba(239, 68, 68, 0.15); background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);">
+                        <div class="stat-value" id="val-hourly-loss" style="color: var(--color-red);">₱0</div>
+                        <div class="stat-label">Est. Hourly Economic Loss</div>
+                    </div>
+                    <div class="stat-card" style="border: 1px solid rgba(59, 130, 246, 0.15); background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);">
+                        <div class="stat-value" id="val-cumulative-loss" style="color: var(--color-accent);">₱0</div>
+                        <div class="stat-label">Cumulative Event Loss (VoLL)</div>
+                    </div>
+                </div>
+
+                <!-- WESM Spot Market Telemetry -->
+                <div class="dashboard-row" style="margin-top: 10px;">
+                    <div class="stat-card" style="border: 1px solid rgba(168, 85, 247, 0.15); background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);">
+                        <div class="stat-value" id="val-wesm-price" style="color: #a855f7;">₱4,500/MWh</div>
+                        <div class="stat-label">WESM Spot Market Price (System Peak)</div>
+                    </div>
+                </div>
+                
+                <!-- Economic Loss Simulation Note -->
+                <div style="font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4; margin-top: 10px; border-top: 1px dashed var(--border-color); padding-top: 8px; background: #fafafa; padding: 8px; border-radius: var(--radius-sm); border: 1px solid #f1f5f9;">
+                    <span style="font-weight: 700; color: var(--text-primary);"><i data-lucide="info" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i> Simulation Disclaimer:</span>
+                    This is merely an educational simulation of the economic losses. Actual real-world productivity damage varies depending on industrial and commercial sectors.
+                    <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px; border-top: 1px solid #e2e8f0; padding-top: 4px;">
+                        Hourly Loss = Shedded Load (MW) × 1,000 × VoLL (₱30.00/kWh)<br>
+                        Cumulative Loss = Σ (Hourly Loss × Outage Duration)
+                    </div>
+                </div>
+
+                <div class="gauge-section mt-4">
+                    <div class="gauge-labels">
+                        <span id="gauge-label-grid">Luzon Grid Reserve Margin</span>
+                        <span id="gauge-label-val" class="text-semibold" style="color: var(--color-normal)">+3,692 MW (Healthy)</span>
+                    </div>
+                    <div class="gauge-bar-outer">
+                        <div class="gauge-bar-inner" id="gauge-bar-fill" style="width: 23%; background-color: var(--color-normal);"></div>
+                    </div>
+                </div>
+
+                <!-- Rich Active Plant Outages and Coop Rotational MLD Detail Block -->
+                <div class="mt-4" id="grid-status-detail-panel" style="display: none;">
+                    <div class="grid-detail-row">
+                        <!-- Down Plants -->
+                        <div style="background: var(--color-red-bg); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: var(--radius-sm); padding: 12px;">
+                            <span class="text-xs text-semibold" style="color: var(--color-red); display: flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+                                <i data-lucide="power-off" style="width: 14px; height: 14px;"></i> Forced Plant Outages
+                            </span>
+                            <div id="plants-down-list" style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto;">
+                                <!-- Dynamically populated plants down -->
+                            </div>
+                        </div>
+                        
+                        <!-- Coops & DUs -->
+                        <div style="background: var(--color-yellow-bg); border: 1px solid rgba(245, 158, 11, 0.15); border-radius: var(--radius-sm); padding: 12px;">
+                            <span class="text-xs text-semibold" style="color: var(--color-yellow); display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="display: flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="rss" style="width: 14px; height: 14px;"></i> Rotational MLD (Coops & DUs)
+                                </span>
+                                <span id="coops-count" class="text-xs text-secondary" style="font-weight: normal; background: #ffffff; border-radius: 99px; padding: 1px 6px; border: 1px solid rgba(245,158,11,0.2);"></span>
+                            </span>
+                            
+                            <!-- Search and Region Filter row -->
+                            <div id="mld-filter-row" style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                <input type="text" id="coops-search" placeholder="Search DU/Coop..." style="flex-grow: 1; font-size: 0.72rem; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 8px; outline: none; transition: var(--transition);" oninput="filterCoops()">
+                                <select id="coops-region-filter" style="font-size: 0.72rem; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; background: #ffffff; outline: none;" onchange="filterCoops()">
+                                    <option value="all">All Regions</option>
+                                    <option value="Luzon">Luzon</option>
+                                    <option value="Visayas">Visayas</option>
+                                </select>
+                            </div>
+                            
+                            <div id="coops-down-list" style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto;">
+                                <!-- Dynamically populated coops -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Technical Arguments & Debates -->
+            <div class="card">
+                <h3><i data-lucide="scale" style="vertical-align: middle;"></i> Technical Investigation Perspectives</h3>
+                <p class="text-xs text-secondary mb-2">How different stakeholders explain the tripping and lag in restoration:</p>
+                
+                <div class="tabs-header">
+                    <button class="tab-btn active" onclick="switchTab(event, 'tab-doe')">DOE (Task Force)</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'tab-erc')">ERC (Regulatory)</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'tab-ngcp')">NGCP (Transmission)</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'tab-gencos')">GenCos (Power Plants)</button>
+                </div>
+
+                <div id="tab-doe" class="tab-content active">
+                    <div class="perspective-card">
+                        <div class="perspective-avatar">
+                            <div class="legend-dot" style="background: #3b82f6; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.8rem;">DOE</div>
+                            <div>
+                                <div class="perspective-name">Grid Reliability Task Force (GRTF)</div>
+                                <div class="perspective-role">Department of Energy</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; line-height: 1.4;">"We are investigating the simultaneous tripping of two parallel 500kV corridors. While the physical transmission line was restored within hours on May 13, the downstream power plants took up to 3 days to resynchronize. Grid security dictates that a single contingency (N-1) must not trigger a system collapse. NGCP and power plants must explain why their local protection coordination systems failed to isolate the fault."</p>
+                    </div>
+                </div>
+
+                <div id="tab-erc" class="tab-content">
+                    <div class="perspective-card" style="border-left-color: #f59e0b;">
+                        <div class="perspective-avatar">
+                            <div class="legend-dot" style="background: #f59e0b; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.8rem;">ERC</div>
+                            <div>
+                                <div class="perspective-name">Energy Regulatory Commission</div>
+                                <div class="perspective-role">Market Monitoring & Enforcement</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; line-height: 1.4;">"Our focus is on market gaming and forced outages during peak summer months. We are auditing the forced shutdowns of GNPD Unit 1 (668MW) and TVI/PEDC in Visayas to verify if they violated the peak-period maintenance restrictions. If companies are found to have prolonged outages to manipulate Spot Market (WESM) prices, we will penalize them heavily. Secondary caps on WESM were triggered during the crisis."</p>
+                    </div>
+                </div>
+
+                <div id="tab-ngcp" class="tab-content">
+                    <div class="perspective-card" style="border-left-color: #ef4444;">
+                        <div class="perspective-avatar">
+                            <div class="legend-dot" style="background: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.8rem;">NGCP</div>
+                            <div>
+                                <div class="perspective-name">National Grid Corp. of the Phils.</div>
+                                <div class="perspective-role">System Operator & Grid Owner</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; line-height: 1.4;">"We are the transmission highway operator, not the generator. On May 13, the Ilijan-Dasmariñas and Ilijan-Tayabas lines tripped due to an external lightning/vegetation flashover. We restored both lines within 10 hours. The issue is that the power plants tripped offline because of their own internal protection settings. We cannot force generators to start up faster. Furthermore, the thin reserve margins under El Niño mean any tiny line disturbance triggers red alerts."</p>
+                    </div>
+                </div>
+
+                <div id="tab-gencos" class="tab-content">
+                    <div class="perspective-card" style="border-left-color: #a855f7;">
+                        <div class="perspective-avatar">
+                            <div class="legend-dot" style="background: #a855f7; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.8rem;">GEN</div>
+                            <div>
+                                <div class="perspective-name">Generation Co. Engineers</div>
+                                <div class="perspective-role">Ilijan, EERI, TVI & GNPD Plants</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; line-height: 1.4;">"When the 500kV transmission lines tripped, the sudden load rejection caused severe voltage and frequency transients at our plant terminals. Our steam and gas turbines automatically tripped to protect themselves from irreversible shaft mechanical damage or boiler explosion. Starting up a massive 660MW coal boiler (like GNPD) or heating up combined-cycle steam lines takes 24 to 48 hours of slow, synchronized heating to avoid micro-cracks in rotors spinning at 3,600 RPM."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Reddit Netizen Corner -->
+            <div class="card" style="margin-bottom: 0;">
+                <div class="flex-between mb-2">
+                    <h3><i data-lucide="message-square" style="vertical-align: middle; color: #ff4500;"></i> Netizen Corner (r/Philippines)</h3>
+                    <span class="text-xs text-secondary" style="font-family: var(--font-mono);" id="reddit-active-count">Active discussion</span>
+                </div>
+                
+                <div class="reddit-feed" id="reddit-comments">
+                    <!-- Dynamic Reddit comments inserted here -->
+                </div>
+
+                <div class="reddit-comment-input">
+                    <input type="text" class="reddit-input" id="new-comment" placeholder="Add your comment (e.g. complaining about the heat or Meralco)...">
+                    <button class="btn btn-primary" onclick="postComment()"><i data-lucide="send"></i> Post</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Simulation Phases Data
+        const simData = [
+            {
+                step: 0,
+                time: "May 13, 2026 - 6:00 AM",
+                desc: "🚨 CRITICAL TRIGGER: The Ilijan-Dasmariñas 500kV Line and Tayabas-Ilijan 500kV Line trip simultaneously in Batangas. Over 2,460 MW of generation capacity (Ilijan and EERI Units) is instantly isolated and disconnected from the Luzon grid. Yellow Alert declared.",
+                badge: "Yellow Alert",
+                badgeClass: "yellow",
+                luzonCap: 13337, // 15799 - 2462
+                luzonDem: 12107,
+                visCap: 2768,
+                visDem: 2339,
+                wesmPrice: 4500,
+                gaugeLabel: "Luzon Grid Contingency Reserves",
+                gaugeVal: "+1,230 MW (Low Margin)",
+                gaugePercent: 62, // Yellow state
+                gaugeColor: "var(--color-yellow)",
+                hourlyLoss: 0,
+                cumulativeLoss: 0,
+                plantsDown: [
+                    { name: "Ilijan Power Complex", cap: "1,200 MW", fuel: "Gas/LNG" },
+                    { name: "EERI LNG Facility", cap: "842 MW", fuel: "LNG" }
+                ],
+                coopsDUs: [],
+                assets: {
+                    "line-dasmarinas": "tripped",
+                    "line-tayabas": "tripped",
+                    "node-ilijan": "tripped",
+                    "node-eeri": "tripped",
+                    "node-masinloc": "online",
+                    "node-gnpd": "online",
+                    "node-pedc": "online",
+                    "node-tvi": "online",
+                    "node-diesel": "online"
+                },
+                redditComments: [
+                    { author: "pinoy_wfh_warrior", votes: 412, text: "Wait, black out bigla dito sa Cavite! Katatawag ko lang sa meetings tapos biglang namatay router. May advisory ba? Sobrang init pa naman, feel like 44°C today! 🥵" },
+                    { author: "ako_si_kuryente", votes: 289, text: "Classic Summer tradition in the Philippines: Power plants experiencing 'forced outages' during peak heat. Galing talaga ng timing! Sabay sabay pa natripan ng dalawang 500kV lines." },
+                    { author: "tech_support_guy", votes: 154, text: "According to local news, it was the Ilijan corridors that tripped. SMC's new LNG plant and old Ilijan are isolated. This is huge, 2.4 Gigawatts lost in an instant." }
+                ]
+            },
+            {
+                step: 1,
+                time: "May 13, 2026 - 4:52 PM",
+                desc: "🔧 LINES RESTORED: NGCP crew successfully restores and re-energizes both the Dasmariñas-Ilijan (4:52 PM) and Tayabas-Ilijan (2:44 PM) lines. However, the disconnected plants (Ilijan, EERI) cannot instantly resynchronize to the grid due to protection locks and cold steam lines. Margin remains tight.",
+                badge: "Yellow Alert",
+                badgeClass: "yellow",
+                luzonCap: 13508,
+                luzonDem: 13881,
+                visCap: 2441,
+                visDem: 2661,
+                wesmPrice: 6800,
+                gaugeLabel: "Luzon Grid Reserve Margin",
+                gaugeVal: "-373 MW (Grid Stress)",
+                gaugePercent: 88, // Crimson warning zone
+                gaugeColor: "var(--color-yellow)",
+                hourlyLoss: 0,
+                cumulativeLoss: 0,
+                plantsDown: [
+                    { name: "Ilijan Power Complex", cap: "1,200 MW", fuel: "Cold Start Lag" },
+                    { name: "EERI LNG Facility", cap: "842 MW", fuel: "Thermal Sync Lock" }
+                ],
+                coopsDUs: [],
+                assets: {
+                    "line-dasmarinas": "restored-offline",
+                    "line-tayabas": "restored-offline",
+                    "node-ilijan": "tripped",
+                    "node-eeri": "tripped",
+                    "node-masinloc": "online",
+                    "node-gnpd": "online",
+                    "node-pedc": "online",
+                    "node-tvi": "online",
+                    "node-diesel": "online"
+                },
+                redditComments: [
+                    { author: "meryendatime", votes: 520, text: "NGCP restored the lines already but bakit wala pa ring kuryente? Sinong may kasalanan, Meralco or generators?" },
+                    { author: "ee_student_up", votes: 340, text: "For non-EEs: You can't just flip a switch to start a 1000MW steam turbine. The thermal stress on the rotors is insane. They have to heat up the pipes slowly, otherwise the shaft will literally bend or crack under micro-tolerances! It takes 24-48 hours minimum." },
+                    { author: "reddit_lurk_ph", votes: 98, text: "Visayas is also on Yellow alert now. Grabe, solar panels look more and more like a necessary investment rather than a luxury right now." }
+                ]
+            },
+            {
+                step: 2,
+                time: "May 14, 2026 - 3:00 PM",
+                desc: "⚠️ THIN MARGINS & DERATING: Extreme El Niño temperatures push actual peak demand past forecasts. With Ilijan and EERI still offline, Masinloc Unit 3 (325MW) also goes into forced outage, and 14 Luzon plants run at derated capacities. Visayas is put under a Red Alert.",
+                badge: "Red Alert (Visayas)",
+                badgeClass: "red",
+                luzonCap: 13183,
+                luzonDem: 13910,
+                visCap: 2390,
+                visDem: 2502,
+                wesmPrice: 9200,
+                gaugeLabel: "Luzon-Visayas Operating Margin",
+                gaugeVal: "-727 MW (Deficit)",
+                gaugePercent: 95,
+                gaugeColor: "var(--color-red)",
+                hourlyLoss: 14540000, // ₱14.54 Million per hour in Visayas
+                cumulativeLoss: 29080000,
+                plantsDown: [
+                    { name: "Ilijan Power Complex", cap: "1,200 MW", fuel: "Thermal Sync Lag" },
+                    { name: "EERI LNG Facility", cap: "842 MW", fuel: "Thermal Sync Lag" },
+                    { name: "Masinloc Unit 3", cap: "325 MW", fuel: "Boiler Tube Leak" },
+                    { name: "PEDC Unit 3 (Panay)", cap: "150 MW", fuel: "Pulverizer Jam" },
+                    { name: "TVI Complex (Toledo)", cap: "168 MW", fuel: "Derated (High Sea Intake Temp)" }
+                ],
+                coopsDUs: [
+                    // Visayas Grid DUs affected on May 14
+                    { name: "VECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "MECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "CEBECO I", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "CEBECO II", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "CEBECO III", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "NEPC", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "NOCECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "MORE Power", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "LEYECO II", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "LEYECO III", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "LEYECO IV", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "LEYECO V", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "SOLECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "BOHECO I", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "BOHECO II", region: "Visayas", slots: "3PM-10PM MLD" }
+                ],
+                assets: {
+                    "line-dasmarinas": "restored-offline",
+                    "line-tayabas": "restored-offline",
+                    "node-ilijan": "tripped",
+                    "node-eeri": "tripped",
+                    "node-masinloc": "tripped",
+                    "node-gnpd": "online",
+                    "node-pedc": "tripped",
+                    "node-tvi": "derated",
+                    "node-diesel": "online",
+                    // Active Visayas DUs under MLD on map
+                    "du-veco": "mld-active",
+                    "du-more": "mld-active",
+                    "du-leyeco": "mld-active",
+                    "du-boheco": "mld-active"
+                },
+                redditComments: [
+                    { author: "cebuano_tech", votes: 615, text: "Red alert in Cebu! Brownout started at 3:00 PM. Heat index is 43 degrees, inside the house is a literal oven. Net connection is super unstable. RIP to my home office work." },
+                    { author: "watt_is_life", votes: 420, text: "May rotational outage din sa Bacolod at Iloilo. Visayas grid is collapsing because we rely too much on power imported from Luzon, and Luzon is already struggling!" },
+                    { author: "bato_sprint_energy", votes: 198, text: "Kuryente is running away faster than Bato Dela Rosa sprinting up the Senate stairs yesterday 🏃‍♂️💨" }
+                ]
+            },
+            {
+                step: 3,
+                time: "May 15, 2026 - 2:30 PM",
+                desc: "💥 DOUBLE BLOW - GNPD TRIPS: GNPower Dinginin Unit 1 (668 MW) suddenly trips in Bataan. In Visayas, multiple peaking diesel plants trip (PDPP1, Carmen Diesel). Luzon enters a massive Red Alert. Rotating manual load dropping (MLD) is triggered across Metro Manila, La Union, Angeles City, and Bulacan.",
+                badge: "CRITICAL RED ALERT",
+                badgeClass: "red",
+                luzonCap: 12075,
+                luzonDem: 12927,
+                visCap: 2379,
+                visDem: 2574,
+                wesmPrice: 10000,
+                gaugeLabel: "Luzon Grid Severe Deficit",
+                gaugeVal: "-852 MW (Manual Load Shedding Active)",
+                gaugePercent: 100,
+                gaugeColor: "var(--color-red)",
+                hourlyLoss: 25560000, // ₱25.56 Million per hour grid-wide
+                cumulativeLoss: 90440000,
+                plantsDown: [
+                    { name: "GNPower Dinginin U1", cap: "668 MW", fuel: "Steam Governor Fault" },
+                    { name: "Ilijan Power Complex", cap: "1,200 MW", fuel: "Thermal Sync Lag" },
+                    { name: "EERI LNG Facility", cap: "842 MW", fuel: "Thermal Sync Lag" },
+                    { name: "Masinloc Unit 3", cap: "325 MW", fuel: "Outage Ongoing" },
+                    { name: "PEDC Unit 3 (Panay)", cap: "150 MW", fuel: "Outage Ongoing" },
+                    { name: "TVI Complex (Toledo)", cap: "338 MW", fuel: "Tripped (Condenser Vacuum Loss)" },
+                    { name: "Diesel Peakers (Cebu)", cap: "42 MW", fuel: "Overheated on Load Limit" }
+                ],
+                coopsDUs: [
+                    // --- LUZON REGION DUS & COOPS (32 total from NGCP updates) ---
+                    { name: "MERALCO", region: "Luzon", slots: "2PM-11PM MLD" },
+                    { name: "OEDC", region: "Luzon", slots: "2PM-5PM, 8PM-11PM MLD" },
+                    { name: "LUELCO", region: "Luzon", slots: "2PM-5PM, 7PM-9PM MLD" },
+                    { name: "CELCOR", region: "Luzon", slots: "2PM-5PM MLD" },
+                    { name: "AEC", region: "Luzon", slots: "2PM-5PM MLD" },
+                    { name: "ISELCO I", region: "Luzon", slots: "2PM-3PM, 7PM-11PM MLD" },
+                    { name: "ISELCO II", region: "Luzon", slots: "2PM-3PM MLD" },
+                    { name: "IEC", region: "Luzon", slots: "2PM-3PM MLD" },
+                    { name: "ALECO", region: "Luzon", slots: "2PM-5PM MLD" },
+                    { name: "ABRECO", region: "Luzon", slots: "3PM-5PM MLD" },
+                    { name: "PANELCO III", region: "Luzon", slots: "3PM-6PM MLD" },
+                    { name: "CAGELCO II", region: "Luzon", slots: "3PM-5PM, 9PM-11PM MLD" },
+                    { name: "BATELEC I", region: "Luzon", slots: "3PM-6PM, 7PM-9PM MLD" },
+                    { name: "BATELEC II", region: "Luzon", slots: "6PM-11PM MLD" },
+                    { name: "QUEZELCO I", region: "Luzon", slots: "3PM-6PM MLD" },
+                    { name: "CANORECO", region: "Luzon", slots: "3PM-6PM MLD" },
+                    { name: "TARELCO I", region: "Luzon", slots: "8PM-11PM MLD" },
+                    { name: "TARELCO II", region: "Luzon", slots: "4PM-8PM MLD" },
+                    { name: "INEC", region: "Luzon", slots: "5PM-7PM MLD" },
+                    { name: "ISECO", region: "Luzon", slots: "5PM-7PM, 9PM-11PM MLD" },
+                    { name: "DECORP", region: "Luzon", slots: "5PM-9PM MLD" },
+                    { name: "NUVELCO", region: "Luzon", slots: "5PM-7PM MLD" },
+                    { name: "PELCO I", region: "Luzon", slots: "5PM-8PM MLD" },
+                    { name: "PELCO II", region: "Luzon", slots: "5PM-8PM MLD" },
+                    { name: "SFELAPCO", region: "Luzon", slots: "5PM-8PM MLD" },
+                    { name: "ZAMECO II", region: "Luzon", slots: "5PM-8PM MLD" },
+                    { name: "CASURECO II", region: "Luzon", slots: "5PM-8PM MLD" },
+                    { name: "CASURECO III", region: "Luzon", slots: "8PM-11PM MLD" },
+                    { name: "CASURECO IV", region: "Luzon", slots: "8PM-11PM MLD" },
+                    { name: "CENPELCO", region: "Luzon", slots: "7PM-9PM MLD" },
+                    { name: "PENELCO", region: "Luzon", slots: "8PM-11PM MLD" },
+                    { name: "QUIRELCO", region: "Luzon", slots: "9PM-11PM MLD" },
+
+                    // --- VISAYAS REGION DUS & COOPS (32 total from NGCP updates) ---
+                    { name: "VECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "MECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "CEBECO I", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "CEBECO II", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "CEBECO III", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "NEPC", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "NOCECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "NORECO I", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "NORECO II", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "NONECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "MORE Power", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "AKELCO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "ANTECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "CAPELCO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "ILECO I", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "ILECO II", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "ILECO III", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "GUIMELCO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "LEYECO II", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "LEYECO III", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "LEYECO IV", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "LEYECO V", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "SOLECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "DORELCO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "ESAMELCO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "BILECO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "NORSAMELCO", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "SAMELCO I", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "SAMELCO II", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "BLCI", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "BOHECO I", region: "Visayas", slots: "3PM-10PM MLD" },
+                    { name: "BOHECO II", region: "Visayas", slots: "3PM-10PM MLD" }
+                ],
+                assets: {
+                    "line-dasmarinas": "restored-offline",
+                    "line-tayabas": "restored-offline",
+                    "node-ilijan": "tripped",
+                    "node-eeri": "tripped",
+                    "node-masinloc": "tripped",
+                    "node-gnpd": "tripped",
+                    "node-pedc": "tripped",
+                    "node-tvi": "tripped",
+                    "node-diesel": "tripped",
+                    // All major Luzon/Visayas MLD DUs activated on map
+                    "du-meralco": "mld-active",
+                    "du-luelco": "mld-active",
+                    "du-oedc": "mld-active",
+                    "du-aec": "mld-active",
+                    "du-batelec": "mld-active",
+                    "du-veco": "mld-active",
+                    "du-more": "mld-active",
+                    "du-leyeco": "mld-active",
+                    "du-boheco": "mld-active",
+                    "du-cagelco": "mld-active",
+                    "du-aleco": "mld-active",
+                    "du-tarelco": "mld-active"
+                },
+                redditComments: [
+                    { author: "meralco_hater_99", votes: 890, text: "Just got a text from Meralco. 'We may experience rotational interruptions between 2PM to 11PM'. Very helpful guys, very precise! How are we supposed to plan our work??" },
+                    { author: "wfh_mommy_ph", votes: 724, text: "Electric bill went up to 12k last month because of El Nino AC usage, now they're cutting the power? Ph energy sector is a absolute joke." },
+                    { author: "spot_market_brrr", votes: 412, text: "WESM Spot market prices are hitting secondary price caps right now. Generation companies must be smiling all the way to the bank while our appliances get fried." },
+                    { author: "investigate_ph", votes: 310, text: "ERC and DOE are already blaming NGCP. NGCP is blaming the generators. Generators are blaming voltage drops. Meanwhile we are sweating our souls out." }
+                ]
+            },
+            {
+                step: 4,
+                time: "May 16, 2026 - 10:30 AM",
+                desc: "🟢 RESOLUTION & RECOVERY: After intensive troubleshooting, GNPD Unit 1 (668MW), EERI Unit 2 (422MW), and EERI Unit 3 (420MW) successfully resynchronize, pouring 1,510 MW back into the grid. Luzon returns to normal conditions. Visayas yellow alert is lifted by evening.",
+                badge: "Normal Conditions",
+                badgeClass: "normal",
+                luzonCap: 15799,
+                luzonDem: 12107,
+                visCap: 2768,
+                visDem: 2339,
+                wesmPrice: 4500,
+                gaugeLabel: "Luzon Grid Reserve Margin",
+                gaugeVal: "+3,692 MW (Healthy Surplus)",
+                gaugePercent: 23,
+                gaugeColor: "var(--color-normal)",
+                hourlyLoss: 0,
+                cumulativeLoss: 115000000,
+                plantsDown: [],
+                coopsDUs: [],
+                assets: {
+                    "line-dasmarinas": "normal",
+                    "line-tayabas": "normal",
+                    "node-ilijan": "online",
+                    "node-eeri": "online",
+                    "node-masinloc": "online",
+                    "node-gnpd": "online",
+                    "node-pedc": "online",
+                    "node-tvi": "online",
+                    "node-diesel": "online"
+                },
+                redditComments: [
+                    { author: "aircon_enjoyer", votes: 345, text: "FINALLY! Power back in Paranaque and the AC is blasting. Never taking electricity for granted again. Hope the grid stays stable for the rest of the summer." },
+                    { author: "engr_philippines", votes: 290, text: "Excellent work by the grid engineers who worked 72 hours straight to resynchronize these giant blocks. But we need structural reforms. Our grid margin is way too narrow." },
+                    { author: "cold_halo_halo", votes: 112, text: "Time to buy halo-halo to celebrate having cold fridge water again!" }
+                ]
+            }
+        ];
+
+        // Asset Technical Details Database
+        const assetDatabase = {
+            "line-dasmarinas": {
+                name: "Dasmariñas-Ilijan 500kV Transmission Line",
+                techSpecs: "500 kV AC | Double Circuit | Length: 68.2 km | Conductor: 4x795 MCM ACSR 'Condor' per phase | Rating: 2,400 MVA per circuit (2,770 Amperes per phase nominal)",
+                description: "This high-voltage double-circuit overhead bulk line serves as the western direct energy corridor connecting the SMC Batangas LNG and gas hub directly to the Dasmariñas substation (Manila South load center). Tripped due to lightning flashover. Nominally carries 2,200 A current under peak flow, with a short-circuit fault withstand capacity of 50 kA.",
+                states: {
+                    "tripped": { status: "TRIPPED (Fault Active)", issue: "Lightning Strike / Flashover", log: "[06:01:22] Trip command initiated by distance relay (Zone 1 fault)\n[06:01:23] CB-201 and CB-202 tripped at Dasmarinas Terminal.\n[06:05:00] Line diagnostics: Ground fault detected. Phase-to-Phase insulation failure." },
+                    "restored-offline": { status: "RESTORED (Offline / Energized)", issue: "No Fault (Waiting for Plants)", log: "[16:52:00] Line repairs completed. Safety checks passed.\n[16:52:15] Circuit breakers closed. Line energized at 503kV.\n[16:53:00] Grid status: Line online but current flow is 0 MW because downstream plants are still offline." },
+                    "normal": { status: "ONLINE (Loaded)", issue: "Normal Operation", log: "[10:30:00] Line operational.\n[10:32:00] Active Power Flow: 1,120 MW\n[10:32:05] Phase voltages stable at 1.01 pu. System operates within normal parameters." }
+                }
+            },
+            "line-tayabas": {
+                name: "Tayabas-Ilijan 500kV Transmission Line",
+                techSpecs: "500 kV AC | Double Circuit | Length: 84.5 km | Conductor: 4x795 MCM ACSR 'Condor' per phase | Rating: 2,400 MVA per circuit (2,770 Amperes per phase nominal)",
+                description: "The eastern 500kV high-capacity bulk power corridor routing Batangas generation via Tayabas substation to eastern Manila load hubs. Tripped concurrently due to voltage collapse after the Dasmariñas line lightning stroke flashover, removing the 'N-1' structural redundancy. Nominal peak current: 1,980 A per circuit; maximum fault current capacity: 50 kA.",
+                states: {
+                    "tripped": { status: "TRIPPED (Fault Active)", issue: "Protection Trip", log: "[06:01:22] Simultaneous protection trip detected.\n[06:01:24] Direct Transfer Trip (DTT) received from Tayabas terminal.\n[06:02:00] Remote telemetry down. Dispatch sent to inspect corridor." },
+                    "restored-offline": { status: "RESTORED (Offline)", issue: "Waiting for Plants", log: "[14:44:00] Tayabas line re-energized successfully.\n[14:45:00] Voltage readings at Batangas terminal: 501kV.\n[14:46:00] Waiting for Ilijan gas blocks to start resynchronization sequence." },
+                    "normal": { status: "ONLINE (Loaded)", issue: "Normal Operation", log: "[10:30:00] Line fully operational.\n[10:31:00] Active Power Flow: 980 MW\n[10:31:12] Protection relays armed and reporting nominal parameters." }
+                }
+            },
+            "node-ilijan": {
+                name: "Ilijan Natural Gas Power Complex",
+                techSpecs: "1,200 MW Capacity | Combined-Cycle Gas Turbines (SMC Global Power)",
+                description: "The crown jewel of Batangas power generation, running on imported LNG. Block A and Block B generate extremely clean baseload energy but are highly sensitive to transmission network voltage disturbances.",
+                states: {
+                    "tripped": { status: "OFFLINE (Protection Lockout)", issue: "Steam Turbine Thermal Lag", log: "[06:01:23] EMERGENCY SHUTDOWN: Severe voltage dip (0.65 pu) on 500kV terminal.\n[06:01:25] Generator protection relay: Under-frequency trip. Turbine steam valves closed.\n[06:10:00] Mechanical diagnostic: Thermal shock checks initiated. Steam lines require cooling before restart." },
+                    "restored-offline": { status: "STARTUP SEQUENCE (Lagging)", issue: "Steam Valve Pre-Heating", log: "[15:00:00] Transmission lines re-energized. Permissive starting received.\n[15:10:00] Boiler pre-heating initiated. System warming rate is restricted to 2.5°C per minute to prevent rotor deformation." },
+                    "normal": { status: "ONLINE (Full Capacity)", issue: "Nominal output", log: "[09:12:00] Gas Turbines GT1-GT4 running at 100% capacity.\n[09:20:00] Steam Turbines ST1-ST2 synchronized to grid.\n[10:30:00] Total Output: 1,200 MW injected into Batangas terminal." }
+                }
+            },
+            "node-eeri": {
+                name: "Excellent Energy Resources Inc. (EERI) LNG Plant",
+                techSpecs: "842 MW Active Capacity | Units 1, 2, 3 LNG Turbines",
+                description: "San Miguel Global Power's newly commissioned LNG facility in Batangas. A state-of-the-art combined cycle facility playing a vital role in Luzon's baseload supply.",
+                states: {
+                    "tripped": { status: "OFFLINE (Safety Outage)", issue: "Voltage Transient Trip", log: "[06:01:23] Grid fault: Inward transient current surge.\n[06:01:24] EERI protection system: Out-of-step blocking relay operated.\n[06:05:00] Unit 2 and Unit 3 turbines locked out. Lubrication pump activated to safely spin down rotors." },
+                    "restored-offline": { status: "STARTUP SEQUENCE", issue: "Hot Gas Path Warming", log: "[15:30:00] Post-trip inspections passed. Auxiliary power switched back from diesel to grid.\n[16:00:00] Purging exhaust duct. Ignition sequence scheduled in 2 hours." },
+                    "normal": { status: "ONLINE (Synced)", issue: "Nominal output", log: "[10:30:00] EERI Unit 2 (422MW) and Unit 3 (420MW) synchronized.\n[10:35:00] Total Output: 842 MW. Dispatched as grid baseload supply." }
+                }
+            },
+            "node-masinloc": {
+                name: "Masinloc Coal Power Plant (Unit 3)",
+                techSpecs: "325 MW Capacity | Pulverized Coal Boiler",
+                description: "Located in Zambales, Masinloc is a vital grid anchor for Northern Luzon. Tripped in the middle of the crisis on May 14, further reducing reserves.",
+                states: {
+                    "tripped": { status: "TRIPPED (Forced Outage)", issue: "Boiler Tube Leak", log: "[11:12:00] Boiler feedwater pressure drop detected.\n[11:15:00] Temperature alarm: Boiler tube failure in primary superheater.\n[11:20:00] Forced shutdown initiated. Unit requires 24 hours to cool down before technicians can enter." },
+                    "restored-offline": { status: "TRIPPED (Cooling Down)", issue: "Boiler Maintenance", log: "[14:00:00] Boiler cooled to 80°C. Repair crews deployed to weld damaged boiler tubes." },
+                    "normal": { status: "ONLINE (Nominal)", issue: "Nominal output", log: "[10:30:00] Boiler repairs completed. Hydrostatic testing passed.\n[10:35:00] Turbine synchronized. Active output: 325 MW." }
+                }
+            },
+            "node-gnpd": {
+                name: "GNPower Dinginin (GNPD) Coal Plant",
+                techSpecs: "668 MW Unit 1 | Supercritical Coal Unit (Bataan)",
+                description: "One of the largest modern coal units in the Philippines. Its sudden tripping on May 15 triggered the extended Red Alert and forced rotational blackouts.",
+                states: {
+                    "tripped": { status: "TRIPPED (Severe Outage)", issue: "Turbine Governor Fault", log: "[11:38:05] Steam Governor control valve failure. Severe speed hunt detected (3650 RPM).\n[11:38:12] EMERGENCY TRIP: Over-speed protection activated to prevent turbine blade disintegration.\n[11:45:00] Technical assessment: Governor actuator needs hydraulic seals replacement." },
+                    "restored-offline": { status: "TRIPPED (Hydraulic Repair)", issue: "Hydraulic Seal Fix", log: "[15:00:00] Replacement seals installed. High-pressure hydraulic system pressurized.\n[16:00:00] Re-igniting boiler using coal-fired burners. Steam pressure rising." },
+                    "normal": { status: "ONLINE (Maximum output)", issue: "Nominal output", log: "[10:30:00] Declared 100% capacity.\n[10:32:00] Active output: 668 MW. Injection to Bataan corridor normalized." }
+                }
+            },
+            "node-pedc": {
+                name: "Panay Energy Development Corp (PEDC) Unit 3",
+                techSpecs: "150 MW Unit | Coal Power Plant",
+                description: "A major source of electricity for Panay Island. Its outage severely compromised the self-sufficiency of the Western Visayas grid.",
+                states: {
+                    "tripped": { status: "OFFLINE (Unplanned Outage)", issue: "Coal Pulverizer Jam", log: "[04:22:00] Coal Mill C feed rate dropped to zero. Pulverizer overload trip.\n[04:25:00] Boiler combustion unstable due to coal feed loss.\n[04:30:00] Forced shutdown to avoid boiler combustion implosion." },
+                    "restored-offline": { status: "OFFLINE (Mill Cleared)", issue: "Pulverizer Jam", log: "[12:00:00] Maintenance crew cleared foreign metal object from mill.\n[13:00:00] Pre-ignition checks started." },
+                    "normal": { status: "ONLINE (Nominal)", issue: "Nominal output", log: "[10:30:00] Unit synchronized. Dispatch: 150 MW supplied to Panay." }
+                }
+            },
+            "node-tvi": {
+                name: "Therma Visayas Inc (TVI) Power Plant",
+                techSpecs: "338 MW Total Capacity | Circulating Fluidized Bed (CFB) Coal",
+                description: "A key baseload plant located in Toledo, Cebu, supplying power to the Visayas grid. Derated and later tripped during the height of the summer heatwave.",
+                states: {
+                    "tripped": { status: "TRIPPED (Forced Outage)", issue: "Condenser Vacuum Loss", log: "[13:12:00] Cooling water intake temperature exceeded 34°C due to sea temperature rising.\n[13:15:00] Condenser vacuum degraded.\n[13:20:00] Unit 1 and 2 tripped on low condenser vacuum protection." },
+                    "derated": { status: "DERATED (Heat Restricted)", issue: "High Intake Cooling Water Temp", log: "[15:00:00] Plant running at reduced output to prevent vacuum trip.\n[15:10:00] Available Capacity: 170 MW (50% derated due to thermal limits)." },
+                    "normal": { status: "ONLINE (Synced)", issue: "Nominal output", log: "[10:30:00] Condenser vacuum stabilized. Seawater cooling flow maximized.\n[10:31:00] Output: 338 MW supplied to VECO grid." }
+                }
+            },
+            "node-diesel": {
+                name: "Visayas Diesel Peaker Plants",
+                techSpecs: "42 MW Peak Capacity | PDPP 1 & Carmen Diesel Units",
+                description: "Fast-start diesel engines in Cebu and Bohol designed to supply emergency power during peak demand. However, even these units suffered trippings due to sustained overload.",
+                states: {
+                    "tripped": { status: "TRIPPED (Engine Thermal Out)", issue: "Engine Coolant Over-temp", log: "[14:15:00] PDPP1 Unit 5 (5MW) and Carmen U1 (10MW) started to cover margin.\n[14:40:00] Engines overheated under sustained 105% overload in summer heat.\n[14:45:00] Automatic thermal shutdown triggered." },
+                    "normal": { status: "ONLINE (Nominal)", issue: "Nominal output", log: "[10:30:00] Diesel generators cooled. Available for fast dispatch in case of contingency." }
+                }
+            },
+            "du-meralco": {
+                name: "Manila Electric Company (MERALCO)",
+                techSpecs: "Luzon Grid | Peak Demand: ~9,000 MW | 7.6 Million Customers",
+                description: "The largest distribution utility in the Philippines, covering Metro Manila, Cavite, Bulacan, Rizal, Laguna, and parts of Quezon and Pampanga. Peak rotational manual load dropping reached 540 MW.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Brownout)", issue: "Grid Deficit (Luzon Peak Stress)", log: "[14:00:00] NGCP dispatch orders 540 MW load shedding.\n[14:05:00] Rotational MLD Group A (Cavite & Bulacan) opened.\n[14:06:00] Shedded load: 240 MW.\n[18:00:00] Rotational MLD Group B (Metro Manila & Rizal) opened.\n[18:05:00] Shedded load: 300 MW." },
+                    "normal": { status: "NOMINAL (100% Served)", issue: "Normal Operation", log: "[10:30:00] System voltage at 230kV bus: 1.00 pu.\n[10:31:00] Total demand served: 8,420 MW.\n[10:32:00] All feeders active. Zero active MLD load-shedding orders." }
+                }
+            },
+            "du-luelco": {
+                name: "La Union Electric Cooperative (LUELCO)",
+                techSpecs: "Luzon Grid | Peak Demand: ~75 MW | La Union Province",
+                description: "Serves the province of La Union. Faced severe load dropping due to voltage dips on the northern Luzon transmission lines.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "Voltage Stability Limits", log: "[14:00:00] NGCP orders LUELCO to shed 8 MW.\n[14:15:00] Group C feeders in San Fernando and Bauang opened.\n[19:00:00] Group D feeders in Agoo and Tubao opened to maintain grid voltage." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Nominal transmission input. Served demand: 62 MW." }
+                }
+            },
+            "du-oedc": {
+                name: "Olongapo Electricity Distribution Company (OEDC)",
+                techSpecs: "Luzon Grid | Peak Demand: ~65 MW | Olongapo City",
+                description: "Privately owned distribution utility serving Olongapo City and parts of Subic.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "Luzon Red Alert Allocation", log: "[14:00:00] Manual Load Drop order: 6 MW shedded.\n[14:10:00] East Bajac-Bajac and Kalaklan feeders isolated." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Supply healthy. System running within limits." }
+                }
+            },
+            "du-aec": {
+                name: "Angeles Electric Corporation (AEC)",
+                techSpecs: "Luzon Grid | Peak Demand: ~180 MW | Angeles City, Pampanga",
+                description: "One of the oldest private DUs, serving Angeles City. Impacted by high substation temperatures during the El Niño heatwave.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational)", issue: "Angeles Substation Overload", log: "[14:00:00] Shedded load: 15 MW.\n[14:12:00] Balibago and Clark-adjacent residential feeders tripped." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] 100% demand served. Grid frequency stable at 60.00 Hz." }
+                }
+            },
+            "du-batelec": {
+                name: "Batangas I & II Electric Cooperatives (BATELEC)",
+                techSpecs: "Luzon Grid | Peak Demand: ~220 MW | Batangas Province",
+                description: "Serves Batangas province. Located right at the heart of the Batangas power generation hub, yet suffered massive load shedding when the bulk transmission lines connecting Batangas plants to Manila tripped.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "Batangas Substation Load Relief", log: "[15:00:00] Shedded load: 22 MW.\n[15:15:00] Lipa City and Tanauan rotational feeders opened.\n[19:00:00] Nasugbu and Balayan lines isolated." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Local generation hub online. Full load served." }
+                }
+            },
+            "du-veco": {
+                name: "Visayan Electric Company (VECO)",
+                techSpecs: "Visayas Grid | Peak Demand: ~650 MW | Metro Cebu",
+                description: "The second largest private DU in the Philippines, serving Cebu City, Mandaue, Lapu-Lapu, and surrounding municipalities. Plagued by extreme generation deficit in Cebu due to local plant failures.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Brownout)", issue: "Visayas Generation Deficit", log: "[15:00:00] VECO orders 85 MW manual load dropping.\n[15:10:00] Banilad, Lahug, and Mabolo feeders isolated.\n[18:00:00] Mandaue Industrial and Talisay residential feeders rotated." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Supply imported from Leyte and Luzon stable. Served demand: 540 MW." }
+                }
+            },
+            "du-more": {
+                name: "MORE Electric and Power Corporation (MORE Power)",
+                techSpecs: "Visayas Grid | Peak Demand: ~130 MW | Iloilo City",
+                description: "Serves Iloilo City. Heavily affected by the complete collapse of Panay generation (PEDC trippings), isolating the island's sub-grid.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "Panay Island Grid Isolation", log: "[15:00:00] PEDC Unit 3 trip forces immediate 24 MW MLD.\n[15:05:00] Mandurriao and Jaro feeders opened.\n[18:30:00] City Proper and Molo feeders rotated." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Substation imports normal. Zero active outages." }
+                }
+            },
+            "du-leyeco": {
+                name: "Leyte I to V Electric Cooperatives (LEYECO)",
+                techSpecs: "Visayas Grid | Peak Demand: ~140 MW | Leyte Island",
+                description: "Serves the province of Leyte, the geothermal hub of Visayas. Suffered load dropping to protect the HVDC link to Luzon.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "HVDC Link Protection", log: "[15:00:00] Shedded load: 12 MW.\n[15:15:00] Tacloban City and Ormoc City residential lines rotated." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Geothermal generation export fully operational." }
+                }
+            },
+            "du-boheco": {
+                name: "Bohol I & II Electric Cooperatives (BOHECO)",
+                techSpecs: "Visayas Grid | Peak Demand: ~95 MW | Bohol Island",
+                description: "Serves Bohol province. Heavily reliant on Leyte geothermal exports via submarine cables. MLD active due to import capacity limits.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "Leyte-Bohol Cable Capacity Limit", log: "[15:00:00] Shedded load: 9 MW.\n[15:20:00] Tagbilaran City and Panglao tourist zones rotated." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Geothermal import active at 82 MW." }
+                }
+            },
+            "du-cagelco": {
+                name: "Cagayan I & II Electric Cooperatives (CAGELCO)",
+                techSpecs: "Luzon Grid | Peak Demand: ~85 MW | Cagayan Province",
+                description: "Serves northern Cagayan. Suffered major thermal line sag and voltage dip outages.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "Northern Grid Voltage Sag", log: "[15:00:00] NGCP orders 10 MW load drop.\n[15:12:00] Tuguegarao City residential feeders opened." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Served demand: 72 MW. Grid frequency stable." }
+                }
+            },
+            "du-aleco": {
+                name: "Albay Electric Cooperative (ALECO)",
+                techSpecs: "Luzon Grid | Peak Demand: ~90 MW | Albay Province",
+                description: "Serves Albay province. Suffered rotational MLD as Bicol's transmission link experienced voltage drops.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "Bicol Corridor Line Loading", log: "[14:00:00] Shedded load: 8 MW.\n[14:15:00] Legazpi City and Tabaco residential lines isolated." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Grid connection stable. served demand: 78 MW." }
+                }
+            },
+            "du-tarelco": {
+                name: "Tarlac I & II Electric Cooperatives (TARELCO)",
+                techSpecs: "Luzon Grid | Peak Demand: ~110 MW | Tarlac Province",
+                description: "Serves Tarlac province. Located close to the tripped GNPower Dinginin plant in Bataan, leading to localized voltage drop shedding.",
+                states: {
+                    "mld-active": { status: "MLD ACTIVE (Rotational Outage)", issue: "Bataan-Tarlac Subgrid Loop Relief", log: "[15:00:00] Shedded load: 14 MW.\n[15:10:00] Tarlac City and Concepcion feeders isolated." },
+                    "normal": { status: "NOMINAL", issue: "Normal Operation", log: "[10:30:00] Full demand of 92 MW served successfully." }
+                }
+            }
+        };
+
+        // State variables
+        let currentStep = 0;
+        let playInterval = null;
+        let isPlaying = false;
+        let selectedAssetId = null;
+
+        // Leaflet Map Global Objects
+        let map;
+        const mapLines = {};
+        const mapNodes = {};
+
+        // Initialize App
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            initMap();
+            updateUIForStep(0);
+            
+            // Force leaflet map layout adjustment
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 200);
+        });
+
+        // Initialize Leaflet Map
+        function initMap() {
+            // Coordinate boundaries of the Philippines [south, west] to [north, east]
+            const maxBounds = [
+                [4.5, 114.0], // Southwest
+                [20.5, 127.5]  // Northeast
+            ];
+
+            // Create Leaflet map centered geographically
+            map = L.map('map', {
+                center: [13.4, 121.9],
+                zoom: 6,
+                minZoom: 5,
+                maxZoom: 9,
+                zoomControl: false,
+                maxBounds: maxBounds,
+                maxBoundsViscosity: 0.9,
+                scrollWheelZoom: false, // Prevents accidental scroll zoom when scanning down the page
+                dragging: !L.Browser.mobile // Disables dragging on mobile viewports for smooth scrolling
+            });
+
+            // Add CartoDB Positron clean light layer
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+
+            // Add custom styled zoom controls in top-right
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            // True Geographic Node Locations in the Philippines
+            const nodeCoords = {
+                "node-masinloc": [15.5603, 119.9542], // Masinloc, Zambales
+                "node-gnpd": [14.4361, 120.5369],     // GNPower Dinginin, Mariveles, Bataan
+                "node-manila": [14.5995, 120.9842],   // Metro Manila (Load Center)
+                "node-dasmarinas": [14.3294, 120.9366], // Dasmariñas Substation, Cavite
+                "node-tayabas": [14.0255, 121.5831],    // Tayabas Substation, Quezon
+                "node-ilijan": [13.6234, 121.0315],    // Ilijan Power Plant, Batangas City
+                "node-eeri": [13.6390, 121.0180],      // EERI LNG Plant, Batangas (Offset slightly to prevent overlap)
+                "node-matnog": [12.5850, 124.0853],    // Matnog HVDC Terminal, Sorsogon
+                "node-samar": [12.5028, 124.2861],     // Samar HVDC Terminal, Allen, Samar
+                "node-leyte": [11.2333, 124.9000],     // Leyte Interconnection Node
+                "node-pedc": [10.7000, 122.5800],      // PEDC Coal Plant, Iloilo City
+                "node-tvi": [10.3800, 123.6300],       // Therma Visayas (TVI), Toledo, Cebu
+                "node-diesel": [10.3200, 123.8500],    // Peaker Diesel (Carmen/Cebu Peakers)
+                
+                // MLD DU Coordinate pins
+                "du-meralco": [14.5833, 121.0500],
+                "du-luelco": [16.6159, 120.3164],
+                "du-oedc": [14.8294, 120.2825],
+                "du-aec": [15.1432, 120.5887],
+                "du-batelec": [13.7844, 121.0721],
+                "du-veco": [10.3157, 123.8854],
+                "du-more": [10.7202, 122.5621],
+                "du-leyeco": [11.2422, 125.0039],
+                "du-boheco": [9.8500, 124.1435],
+                "du-cagelco": [18.3564, 121.6174],
+                "du-aleco": [13.1367, 123.7438],
+                "du-tarelco": [15.4800, 120.5900]
+            };
+
+            const nodeLabels = {
+                "node-masinloc": "Masinloc (325MW)",
+                "node-gnpd": "GNPD U1 (668MW)",
+                "node-manila": "Metro Manila Load Center",
+                "node-dasmarinas": "Dasmariñas Substation",
+                "node-tayabas": "Tayabas Substation",
+                "node-ilijan": "Ilijan Complex (1,200MW)",
+                "node-eeri": "EERI LNG (842MW)",
+                "node-matnog": "Matnog HVDC",
+                "node-samar": "Samar HVDC",
+                "node-leyte": "Leyte Substation",
+                "node-pedc": "PEDC U3 (150MW)",
+                "node-tvi": "TVI Complex (338MW)",
+                "node-diesel": "Peaker Diesel (42MW)",
+                
+                // MLD DU Coordinate labels
+                "du-meralco": "Meralco (Metro Manila)",
+                "du-luelco": "LUELCO (La Union)",
+                "du-oedc": "OEDC (Olongapo)",
+                "du-aec": "AEC (Angeles City)",
+                "du-batelec": "BATELEC (Batangas)",
+                "du-veco": "VECO (Cebu)",
+                "du-more": "MORE Power (Iloilo)",
+                "du-leyeco": "LEYECO (Leyte)",
+                "du-boheco": "BOHECO (Bohol)",
+                "du-cagelco": "CAGELCO (Cagayan)",
+                "du-aleco": "ALECO (Albay)",
+                "du-tarelco": "TARELCO (Tarlac)"
+            };
+
+            // Draw all geographic markers
+            for (const [id, coords] of Object.entries(nodeCoords)) {
+                let type = 'load';
+                if (id === 'node-matnog' || id === 'node-samar') {
+                    type = 'hvdc';
+                } else if (id === 'node-dasmarinas' || id === 'node-tayabas' || id === 'node-leyte') {
+                    type = 'load';
+                } else if (id.startsWith('node-')) {
+                    type = 'plant';
+                } else if (id.startsWith('du-')) {
+                    type = 'coop';
+                }
+
+                let isInteractive = id !== 'node-manila' && id !== 'node-leyte';
+                let isAsset = id !== 'node-manila' && id !== 'node-leyte' && id !== 'node-matnog' && id !== 'node-samar';
+
+                // Create Circle Marker
+                const marker = L.circleMarker(coords, {
+                    className: `leaflet-interactive map-node ${type} online`,
+                    radius: id === 'node-manila' ? 7 : (type === 'plant' ? 6.5 : (type === 'coop' ? 5.5 : 4.5)),
+                    fillOpacity: 1.0,
+                    color: '#ffffff',
+                    weight: 2
+                }).addTo(map);
+
+                // Add Hover & Click Bindings
+                if (isInteractive) {
+                    marker.on('click', () => {
+                        let name = nodeLabels[id].split('(')[0].trim();
+                        inspectAsset(id, name);
+                    });
+
+                    marker.on('mouseover', function() {
+                        this.setStyle({ weight: 3.5 });
+                    });
+
+                    marker.on('mouseout', function() {
+                        this.setStyle({ weight: 2 });
+                    });
+                }
+
+                // Bind custom floating tooltips (no box borders, pure text floating next to marker)
+                let tooltipDirection = 'right';
+                let tooltipOffset = [8, 0];
+                if (id === 'node-gnpd' || id === 'node-eeri' || id === 'node-dasmarinas' || id === 'node-matnog' || id === 'du-oedc' || id === 'du-aec' || id === 'du-more' || id === 'du-tarelco') {
+                    tooltipDirection = 'left';
+                    tooltipOffset = [-8, 0];
+                }
+
+                marker.bindTooltip(nodeLabels[id].split('(')[0], {
+                    permanent: true,
+                    direction: tooltipDirection,
+                    className: 'map-tooltip',
+                    offset: tooltipOffset
+                });
+
+                if (isAsset) {
+                    mapNodes[id] = marker;
+                }
+            }
+
+            // Draw and Improve Transmission Corridor Lines
+            const lineDefinitions = {
+                "line-dasmarinas": {
+                    coords: [nodeCoords["node-dasmarinas"], nodeCoords["node-ilijan"]],
+                    name: "Dasmariñas-Ilijan 500kV Line"
+                },
+                "line-tayabas": {
+                    coords: [nodeCoords["node-tayabas"], nodeCoords["node-ilijan"]],
+                    name: "Tayabas-Ilijan 500kV Line"
+                },
+                "line-masinloc": {
+                    coords: [nodeCoords["node-masinloc"], nodeCoords["node-manila"]],
+                    name: "Masinloc-Manila 230kV Corridor",
+                    static: true
+                },
+                "line-gnpd": {
+                    coords: [nodeCoords["node-gnpd"], nodeCoords["node-manila"]],
+                    name: "Dinginin-Manila 500kV Corridor",
+                    static: true
+                },
+                "line-manila-dasmarinas": {
+                    coords: [nodeCoords["node-manila"], nodeCoords["node-dasmarinas"]],
+                    name: "Manila-Dasmariñas Bulk Line",
+                    static: true
+                },
+                "line-manila-tayabas": {
+                    coords: [nodeCoords["node-manila"], nodeCoords["node-tayabas"]],
+                    name: "Manila-Tayabas Bulk Line",
+                    static: true
+                },
+                "line-batangas-tayabas": {
+                    coords: [nodeCoords["node-ilijan"], nodeCoords["node-tayabas"]],
+                    name: "Batangas-Tayabas Connector",
+                    static: true
+                },
+                "line-hvdc": {
+                    coords: [nodeCoords["node-matnog"], nodeCoords["node-samar"]],
+                    name: "Luzon-Visayas HVDC Submarine Cable",
+                    isHvdc: true
+                },
+                "line-samar-leyte": {
+                    coords: [nodeCoords["node-samar"], nodeCoords["node-leyte"], nodeCoords["node-tvi"]],
+                    name: "Samar-Leyte-Cebu Interconnection Corridor",
+                    static: true
+                },
+                "line-cebu-panay": {
+                    coords: [nodeCoords["node-tvi"], [10.6765, 122.9509], nodeCoords["node-pedc"]],
+                    name: "Cebu-Negros-Panay Interconnection Link",
+                    static: true
+                }
+            };
+
+            // Draw polylines
+            for (const [id, def] of Object.entries(lineDefinitions)) {
+                let isStatic = def.static === true;
+                let isHvdc = def.isHvdc === true;
+
+                let className = 'transmission-line normal';
+                let color = '#10b981'; // Emerald normal
+
+                if (isStatic) {
+                    className = 'transmission-line static-line';
+                    color = '#94a3b8'; // Slate grey for background grid lines
+                } else if (isHvdc) {
+                    className = 'transmission-line hvdc-line';
+                    color = '#a855f7'; // purple for HVDC Link
+                }
+
+                const polyline = L.polyline(def.coords, {
+                    className: className,
+                    color: color,
+                    weight: isHvdc ? 2.5 : (isStatic ? 1.5 : 3.0),
+                    opacity: 0.85
+                }).addTo(map);
+
+                if (!isStatic) {
+                    polyline.on('click', () => {
+                        inspectAsset(id, def.name);
+                    });
+
+                    polyline.on('mouseover', function() {
+                        this.setStyle({ weight: isHvdc ? 4.0 : 5.0, opacity: 1.0 });
+                    });
+
+                    polyline.on('mouseout', function() {
+                        this.setStyle({ weight: isHvdc ? 2.5 : 3.0, opacity: 0.85 });
+                    });
+
+                    mapLines[id] = polyline;
+                }
+            }
+        }
+
+        // Get Status Hexadecimal color for Leaflet Vector styles fallback
+        function getStatusHexColor(status) {
+            if (status === 'online' || status === 'normal') return '#10b981'; // Emerald Green
+            if (status === 'tripped') return '#ef4444'; // Crimson Red
+            if (status === 'derated' || status === 'restored-offline') return '#f59e0b'; // Amber Yellow
+            return '#64748b'; // Slate gray
+        }
+
+        // Update UI based on simulation step
+        function updateUIForStep(step) {
+            currentStep = step;
+            const data = simData[step];
+            
+            // 1. Slider & banner updates
+            document.getElementById("sim-slider").value = step;
+            document.getElementById("current-sim-time").innerText = data.time;
+            document.getElementById("current-sim-desc").innerText = data.desc;
+            
+            // Active step highlighting in dot labels
+            const steps = document.querySelectorAll(".timeline-step");
+            steps.forEach((s, idx) => {
+                if (idx === step) {
+                    s.classList.add("active");
+                } else {
+                    s.classList.remove("active");
+                }
+            });
+
+            // 2. Telemetry dashboard updates
+            document.getElementById("val-luzon-capacity").innerText = formatMW(data.luzonCap);
+            document.getElementById("val-luzon-demand").innerText = formatMW(data.luzonDem);
+            document.getElementById("val-visayas-capacity").innerText = formatMW(data.visCap);
+            document.getElementById("val-visayas-demand").innerText = formatMW(data.visDem);
+            document.getElementById("val-wesm-price").innerText = `₱${data.wesmPrice.toLocaleString()}/MWh`;
+
+            // 3. Update Economic Loss Widget in PHP
+            document.getElementById("val-hourly-loss").innerText = formatPHP(data.hourlyLoss);
+            document.getElementById("val-cumulative-loss").innerText = formatPHP(data.cumulativeLoss);
+
+            // 4. Grid status badge
+            const badge = document.getElementById("overall-status-badge");
+            badge.innerText = data.badge;
+            badge.className = `status-badge ${data.badgeClass}`;
+
+            // 5. Reserve Margin Gauge update
+            const totalReserve = (data.luzonCap + data.visCap) - (data.luzonDem + data.visDem);
+            const gaugeLabel = document.getElementById("gauge-label-grid");
+            const gaugeVal = document.getElementById("gauge-label-val");
+            const gaugeFill = document.getElementById("gauge-bar-fill");
+            
+            gaugeLabel.innerText = "Luzon-Visayas Reserve Margin";
+            if (totalReserve < 0) {
+                gaugeVal.innerText = `${totalReserve.toLocaleString()} MW (Supply Deficit)`;
+                gaugeVal.style.color = "var(--color-red)";
+                gaugeFill.style.backgroundColor = "var(--color-red)";
+            } else if (totalReserve < 500) {
+                gaugeVal.innerText = `+${totalReserve.toLocaleString()} MW (Critical Reserves)`;
+                gaugeVal.style.color = "var(--color-red)";
+                gaugeFill.style.backgroundColor = "var(--color-red)";
+            } else if (totalReserve < 1500) {
+                gaugeVal.innerText = `+${totalReserve.toLocaleString()} MW (Thin Margin)`;
+                gaugeVal.style.color = "var(--color-yellow)";
+                gaugeFill.style.backgroundColor = "var(--color-yellow)";
+            } else {
+                gaugeVal.innerText = `+${totalReserve.toLocaleString()} MW (Healthy)`;
+                gaugeVal.style.color = "var(--color-normal)";
+                gaugeFill.style.backgroundColor = "var(--color-normal)";
+            }
+            gaugeFill.style.width = `${data.gaugePercent}%`;
+
+            // 6. Rich active plant outages and Coop MLD Detail panel
+            const detailPanel = document.getElementById("grid-status-detail-panel");
+            const plantsDownList = document.getElementById("plants-down-list");
+            const coopsDownList = document.getElementById("coops-down-list");
+
+            // Populate Plants Down
+            if (data.plantsDown.length > 0) {
+                detailPanel.style.display = "block";
+                plantsDownList.innerHTML = data.plantsDown.map(p => `
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(239,68,68,0.15); padding: 2px 0;">
+                        <span style="font-weight:600; color:var(--text-primary);">${p.name}</span>
+                        <span style="color:var(--color-red); font-family:var(--font-mono); font-weight:700;">-${p.cap}</span>
+                    </div>
+                `).join('');
+            } else {
+                plantsDownList.innerHTML = `<div style="color:var(--color-normal); font-weight:600; text-align:center; padding:10px 0;">No active plant outages</div>`;
+            }
+
+            // Populate Coops / DUs affected
+            const coopsSearchInput = document.getElementById("coops-search");
+            const coopsRegionFilter = document.getElementById("coops-region-filter");
+            const coopsCountSpan = document.getElementById("coops-count");
+            
+            // Store active coops in global state for filtering
+            window.activeCoops = data.coopsDUs;
+            
+            if (data.coopsDUs.length > 0) {
+                detailPanel.style.display = "block";
+                document.getElementById("mld-filter-row").style.display = "flex";
+                filterCoops(); // Fire the filtering function to populate
+            } else {
+                document.getElementById("mld-filter-row").style.display = "none";
+                coopsCountSpan.innerText = "";
+                coopsDownList.innerHTML = `<div style="color:var(--color-normal); font-weight:600; text-align:center; padding:10px 0;">No active load shedding (MLD)</div>`;
+            }
+
+            // Hide entire panel if both are empty (Step 4 / Normal)
+            if (data.plantsDown.length === 0 && data.coopsDUs.length === 0) {
+                detailPanel.style.display = "none";
+            }
+
+            // 7. Update Leaflet Map Path and Node Classes dynamically
+            for (const [id, line] of Object.entries(mapLines)) {
+                const status = data.assets[id] || 'normal';
+                const el = line.getElement();
+                if (el) {
+                    el.setAttribute("class", `transmission-line ${status}`);
+                }
+                line.setStyle({ color: getStatusHexColor(status) });
+            }
+
+            for (const [id, node] of Object.entries(mapNodes)) {
+                const status = data.assets[id] || 'normal';
+                const el = node.getElement();
+                if (el) {
+                    const nodeType = id.startsWith('du-') ? 'coop' : 'plant';
+                    el.setAttribute("class", `leaflet-interactive map-node ${nodeType} ${status}`);
+                }
+            }
+
+            // 8. Inspect current selected asset if active
+            if (selectedAssetId) {
+                updateInspectorDetails(selectedAssetId);
+            }
+
+            // 9. Reddit Comment updates
+            const redditContainer = document.getElementById("reddit-comments");
+            redditContainer.innerHTML = data.redditComments.map(comment => `
+                <div class="reddit-post">
+                    <div class="reddit-header">
+                        <span class="reddit-subreddit">r/Philippines</span>
+                        <span class="reddit-author">u/${comment.author}</span>
+                        <span style="margin-left: auto;">May 2026</span>
+                    </div>
+                    <div class="reddit-body">
+                        ${comment.text}
+                    </div>
+                    <div class="reddit-footer">
+                        <div class="reddit-votes">
+                            <i data-lucide="arrow-up" style="width: 14px; height: 14px; color: #ff4500;"></i>
+                            <span>${comment.votes}</span>
+                            <i data-lucide="arrow-down" style="width: 14px; height: 14px;"></i>
+                        </div>
+                        <div><i data-lucide="message-square" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 3px;"></i> Reply</div>
+                        <div><i data-lucide="share-2" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 3px;"></i> Share</div>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // Timeline Slider change listener
+        document.getElementById("sim-slider").addEventListener("input", (e) => {
+            const step = parseInt(e.target.value);
+            updateUIForStep(step);
+            if (isPlaying) togglePlay(); // Pause if user drags slider manually
+        });
+
+        // Set simulation step
+        function setSimStep(step) {
+            updateUIForStep(step);
+            if (isPlaying) togglePlay();
+        }
+
+        // Format Megawatt string
+        function formatMW(val) {
+            return `${val.toLocaleString()} MW`;
+        }
+
+        // Format PHP string
+        function formatPHP(val) {
+            if (val === 0) return "₱0.00";
+            if (val >= 1000000) {
+                return `₱${(val / 1000000).toFixed(2)} Million`;
+            }
+            return `₱${val.toLocaleString()}`;
+        }
+
+        // Toggle simulation play
+        function togglePlay() {
+            const playBtn = document.getElementById("play-btn");
+            const indicator = document.getElementById("sim-status-indicator");
+            
+            if (isPlaying) {
+                // Pause
+                clearInterval(playInterval);
+                playBtn.innerHTML = `<i data-lucide="play"></i> Play Simulation`;
+                indicator.innerText = "Paused";
+                isPlaying = false;
+            } else {
+                // Play
+                playBtn.innerHTML = `<i data-lucide="pause"></i> Pause`;
+                indicator.innerText = "Playing...";
+                isPlaying = true;
+                
+                playInterval = setInterval(() => {
+                    let nextStep = currentStep + 1;
+                    if (nextStep >= simData.length) {
+                        nextStep = 0; // Loop back
+                    }
+                    updateUIForStep(nextStep);
+                }, 4500); // 4.5 seconds per phase
+            }
+            lucide.createIcons();
+        }
+
+        // Reset simulation
+        function resetSim() {
+            if (isPlaying) togglePlay();
+            updateUIForStep(0);
+            closeInspector();
+        }
+
+        // Inspect element (line or plant node)
+        function inspectAsset(id, labelName) {
+            selectedAssetId = id;
+            const inspector = document.getElementById("inspector");
+            inspector.style.display = "block";
+            
+            updateInspectorDetails(id);
+        }
+
+        function updateInspectorDetails(id) {
+            const assetData = assetDatabase[id];
+            if (!assetData) return;
+
+            const currentStatus = simData[currentStep].assets[id];
+            const stateInfo = assetData.states[currentStatus] || { status: "ONLINE", issue: "Normal", log: "[LOG] Nominal." };
+
+            document.getElementById("insp-title").innerHTML = `<i data-lucide="activity" style="color: ${getStatusColor(currentStatus)}"></i> ${assetData.name}`;
+            document.getElementById("insp-desc").innerHTML = `<span style="font-family: var(--font-display); font-size: 0.75rem; color: var(--text-tertiary); display: block; margin-bottom: 6px;">${assetData.techSpecs}</span>${assetData.description}`;
+            
+            // Stats panel
+            document.getElementById("insp-stats").style.display = "grid";
+            document.getElementById("insp-stat-capacity").innerText = assetData.techSpecs.split('|')[0].trim();
+            document.getElementById("insp-stat-status").innerText = stateInfo.status;
+            document.getElementById("insp-stat-status").style.color = getStatusColor(currentStatus);
+            document.getElementById("insp-stat-reason").innerText = stateInfo.issue;
+
+            // Logs
+            const logsBox = document.getElementById("insp-tech-logs");
+            logsBox.style.display = "block";
+            logsBox.innerHTML = stateInfo.log.split('\n').map(line => `<div>${line}</div>`).join('');
+        }
+
+        function getStatusColor(status) {
+            if (status === 'online' || status === 'normal') return 'var(--color-normal)';
+            if (status === 'tripped') return 'var(--color-red)';
+            if (status === 'derated' || status === 'restored-offline') return 'var(--color-yellow)';
+            return 'var(--text-secondary)';
+        }
+
+        function closeInspector() {
+            document.getElementById("inspector").style.display = "none";
+            selectedAssetId = null;
+        }
+
+        // Switch perspectives tabs
+        function switchTab(evt, tabId) {
+            const tabContents = document.querySelectorAll(".tab-content");
+            tabContents.forEach(content => content.classList.remove("active"));
+            
+            const tabBtns = document.querySelectorAll(".tab-btn");
+            tabBtns.forEach(btn => btn.classList.remove("active"));
+            
+            document.getElementById(tabId).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        // Reddit Section: Post comment
+        function postComment() {
+            const input = document.getElementById("new-comment");
+            const text = input.value.trim();
+            if (!text) return;
+
+            const newPost = {
+                author: "reddit_user_" + Math.floor(Math.random() * 10000),
+                votes: 1,
+                text: text
+            };
+
+            // Prepend comment to current step's reddit feed
+            simData[currentStep].redditComments.unshift(newPost);
+            
+            // Refresh feed
+            updateUIForStep(currentStep);
+            input.value = "";
+        }
+
+        // Search and Filter Cooperatives & DUs
+        function filterCoops() {
+            const list = document.getElementById("coops-down-list");
+            const search = document.getElementById("coops-search").value.toLowerCase();
+            const region = document.getElementById("coops-region-filter").value;
+            const coopsCountSpan = document.getElementById("coops-count");
+            
+            if (!window.activeCoops || window.activeCoops.length === 0) return;
+            
+            const filtered = window.activeCoops.filter(c => {
+                const nameMatch = c.name.toLowerCase().includes(search);
+                const regionMatch = region === 'all' || c.region === region;
+                return nameMatch && regionMatch;
+            });
+            
+            coopsCountSpan.innerText = `${filtered.length} DUs active`;
+            
+            if (filtered.length === 0) {
+                list.innerHTML = `<div style="color:var(--text-tertiary); text-align:center; padding:10px 0; font-size:0.75rem;">No matching DUs found</div>`;
+                return;
+            }
+            
+            list.innerHTML = filtered.map(c => `
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(245,158,11,0.15); padding: 4px 0; align-items: center;">
+                    <div>
+                        <span style="font-weight:700; color:var(--text-primary);">${c.name}</span>
+                        <span style="font-size:0.7rem; color:var(--text-secondary); margin-left: 4px;">(${c.region})</span>
+                    </div>
+                    <span style="color:var(--color-yellow); font-weight:600; font-size:0.75rem;">${c.slots}</span>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
